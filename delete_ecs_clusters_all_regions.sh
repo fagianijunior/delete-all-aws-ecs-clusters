@@ -55,6 +55,15 @@ for region in $regions; do
             
             # Wait until the number of active tasks is 0
             aws ecs wait services-stable --cluster $cluster --services $service --profile $AWS_PROFILE --region $region > /dev/null 2>&1
+
+            # Deregister task definitions
+            echo "Deregistering task definitions"
+            task_definitions=$(aws ecs list-task-definitions --profile $AWS_PROFILE --region $region --family-prefix $service --query 'taskDefinitionArns' --output text)
+
+            for task_definition in $task_definitions; do
+                echo "Deregistering task definition: $task_definition"
+                aws ecs deregister-task-definition --task-definition $task_definition --region $region --profile $AWS_PROFILE > /dev/null 2>&1
+            done
         done
         
         # List all tasks running on the cluster
@@ -78,4 +87,5 @@ for region in $regions; do
     done
 done
 
-echo "All clusters and their services have been deleted in all regions, excluding specified clusters."
+
+echo "All clusters, services, and task definitions have been deleted in all regions, excluding specified clusters."
